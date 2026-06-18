@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kashif Murtaza — React Native v4 Proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --border: #1e2a3a;
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --gold: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --success: #34d399;
+    --display: 'Syne', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  .grid-bg {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── GLOW ORBS ── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.12;
+  }
+  .orb-1 { width: 500px; height: 500px; background: var(--accent); top: -100px; right: -100px; }
+  .orb-2 { width: 400px; height: 400px; background: var(--accent2); bottom: 10%; left: -80px; }
+
+  /* ── WRAPPER ── */
+  .wrap { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    backdrop-filter: blur(16px);
+    background: rgba(11,15,26,0.85);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .nav-brand {
+    font-family: var(--display);
+    font-size: 15px; font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+  }
+  .nav-tag {
+    font-size: 12px; color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 140px 0 80px;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.2);
+    padding: 6px 14px; border-radius: 20px;
+    margin-bottom: 28px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
+  .hero h1 .highlight {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 540px;
+    margin: 0 auto 40px;
+  }
+  .hero-badge-row {
+    display: flex; justify-content: center; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 48px;
+  }
+  .badge {
+    font-size: 12px; font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px; border-radius: 20px;
+  }
+  .badge.green { border-color: rgba(52,211,153,0.3); color: var(--success); background: rgba(52,211,153,0.06); }
+  .badge.blue  { border-color: rgba(56,189,248,0.3); color: var(--accent);  background: rgba(56,189,248,0.06); }
+  .badge.gold  { border-color: rgba(251,191,36,0.3);  color: var(--gold);   background: rgba(251,191,36,0.06); }
+
+  /* ── LETTER BLOCK ── */
+  .letter-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 40px;
+    margin-bottom: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .letter-block::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .letter-to {
+    font-size: 13px; font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .letter-opener {
+    font-family: var(--display);
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .letter-opener .risk { color: var(--accent); }
+  .letter-body p {
+    color: #94a3b8;
+    font-size: 0.97rem;
+    margin-bottom: 16px;
+  }
+  .letter-body p:last-of-type { margin-bottom: 0; }
+
+  /* ── POINTS SECTION ── */
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+  .points-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 60px;
+  }
+  @media (max-width: 580px) {
+    .points-grid { grid-template-columns: 1fr; }
+    .letter-block { padding: 28px 22px; }
+  }
+  .point-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color 0.25s, transform 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .point-card:hover {
+    border-color: rgba(56,189,248,0.35);
+    transform: translateY(-3px);
+  }
+  .point-card::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.2), transparent);
+  }
+  .point-num {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.15);
+    padding: 3px 8px; border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  .point-title {
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .point-body {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 60px;
+  }
+  @media (max-width: 480px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--display);
+    font-size: 2rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block; margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 12px; color: var(--muted); font-weight: 500;
+  }
+
+  /* ── Q&A SECTION ── */
+  .qa-list {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 60px;
+  }
+  .qa-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    align-items: start;
+    transition: border-color 0.2s;
+  }
+  .qa-item:hover { border-color: rgba(129,140,248,0.3); }
+  @media (max-width: 580px) { .qa-item { grid-template-columns: 1fr; gap: 6px; } }
+  .qa-q {
+    font-size: 13px; font-weight: 600;
+    color: var(--accent2);
+  }
+  .qa-a {
+    font-size: 14px; color: var(--text);
+  }
+  .qa-a .chip {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    background: rgba(52,211,153,0.1);
+    border: 1px solid rgba(52,211,153,0.25);
+    color: var(--success);
+    padding: 2px 8px; border-radius: 6px;
+    margin-right: 6px;
+  }
+
+  /* ── QUESTION CALLOUT ── */
+  .question-callout {
+    background: rgba(56,189,248,0.05);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-bottom: 60px;
+  }
+  .question-callout .qlabel {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+  }
+  .question-callout p {
+    font-size: 1rem; color: var(--text); line-height: 1.7;
+  }
+
+  /* ── CTA ── */
+  .cta-block {
+    text-align: center;
+    padding: 60px 0 100px;
+  }
+  .cta-block h2 {
+    font-family: var(--display);
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 800; letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  .cta-block p { color: var(--muted); margin-bottom: 32px; font-size: 0.97rem; }
+  .cta-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #0b0f1a;
+    font-weight: 700; font-size: 15px;
+    padding: 14px 36px; border-radius: 10px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 30px rgba(56,189,248,0.25);
+  }
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(56,189,248,0.4); }
+  .cta-rate {
+    margin-top: 20px;
+    font-size: 13px; color: var(--muted);
+  }
+  .cta-rate strong { color: var(--gold); }
+
+  /* ── APPS ROW ── */
+  .apps-section { margin-bottom: 60px; }
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .app-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .app-card:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-2px); }
+  .app-icon { font-size: 24px; margin-bottom: 8px; }
+  .app-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .app-store { font-size: 11px; color: var(--muted); }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 0 60px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 24px;
+    text-align: center;
+    font-size: 13px; color: var(--muted);
+    position: relative; z-index: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<nav>
+  <div class="nav-brand">Kashif Murtaza</div>
+  <div class="nav-tag">React Native · v4 Proposal</div>
+</nav>
+
+<main>
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero reveal">
+    <div class="hero-eyebrow">Proposal for Jeff</div>
+    <h1>Your v4 release needs<br/><span class="highlight">careful hands,</span><br/>not a new architect.</h1>
+    <p class="hero-sub">A practical, no-rewrite React Native developer who reads the code before touching it — and tests on real devices before delivering anything.</p>
+    <div class="hero-badge-row">
+      <span class="badge green">✓ Real Device Testing</span>
+      <span class="badge blue">✓ GitHub PR Workflow</span>
+      <span class="badge gold">✓ AI Code Review</span>
+      <span class="badge green">✓ Available This Week</span>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-row reveal">
+    <div class="stat-card">
+      <span class="stat-num">8+</span>
+      <span class="stat-label">Years Mobile Dev</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">20+</span>
+      <span class="stat-label">Live Apps (iOS & Android)</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">$30</span>
+      <span class="stat-label">/ hr · Matches Budget</span>
+    </div>
+  </div>
+
+  <!-- COVER LETTER -->
+  <div class="letter-block reveal">
+    <div class="letter-to">Cover Letter · To Jeff</div>
+    <div class="letter-opener">
+      Maintaining a live app heading into v4 — that's where things get <span class="risk">risky</span> if the wrong developer touches it.
+    </div>
+    <div class="letter-body">
+      <p>You've been very clear: no rewrites, no architecture changes, just careful hands on an existing codebase. With 8+ years in mobile development and 20+ apps live on both the App Store and Google Play, I've spent more time maintaining and stabilizing production apps than building from scratch.</p>
+      <p>A few things from your post stood out to me specifically — they're covered in the breakdown below.</p>
+    </div>
+  </div>
+
+  <!-- POINTS -->
+  <section class="reveal">
+    <div class="section-label">Why I'm the right fit</div>
+    <div class="points-grid">
+
+      <div class="point-card">
+        <div class="point-num">01</div>
+        <div class="point-title">Real-Device Testing</div>
+        <div class="point-body">I test on physical iOS and Android devices before every delivery. Simulator-only testing has burned too many clients in production — I don't do it.</div>
+      </div>
+
+      <div class="point-card">
+        <div class="point-num">02</div>
+        <div class="point-title">AI-Generated Code Review</div>
+        <div class="point-body">I actively use Cursor and Claude Code in my workflow, which means I know exactly where these tools slip up — logic errors, edge cases, architectural drift.</div>
+      </div>
+
+      <div class="point-card">
+        <div class="point-num">03</div>
+        <div class="point-title">GitHub PR Workflow</div>
+        <div class="point-body">Every fix goes through a branch, gets reviewed, then merged. No direct pushes to main. Clean commit history with clear descriptions every time.</div>
+      </div>
+
+      <div class="point-card">
+        <div class="point-num">04</div>
+        <div class="point-title">My Approach</div>
+        <div class="point-body">I read the relevant code before writing a single line, comment my changes clearly, and test on device before submitting the PR. You'll know exactly what changed and why.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CLIENT Q&A -->
+  <section class="reveal">
+    <div class="section-label">Your 6 Questions — Answered</div>
+    <div class="qa-list">
+
+      <div class="qa-item">
+        <div class="qa-q">React Native / Expo Experience</div>
+        <div class="qa-a">8+ years in mobile development. Multiple production RN/Expo apps live on both stores. Strong in TypeScript, JavaScript, Firebase, REST APIs.</div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Real Device Testing?</div>
+        <div class="qa-a"><span class="chip">Yes</span> iPhone and Android both. Never rely on simulators for pre-release testing. Comfortable with TestFlight and internal Android tracks.</div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">GitHub Pull Requests?</div>
+        <div class="qa-a"><span class="chip">Yes</span> Branch → review → merge. No direct pushes to main. Every PR includes clear notes on what changed and why.</div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">AI Coding Tools?</div>
+        <div class="qa-a">Cursor and Claude Code regularly. I treat AI output as a draft — always reviewed, tested, and verified before submitting.</div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Availability This Week?</div>
+        <div class="qa-a"><span class="chip">Immediate</span> Available to start today. Can dedicate focused hours to the trial task this week.</div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Rate / First Task?</div>
+        <div class="qa-a"><strong style="color:var(--gold)">$30/hr</strong> — matches your posted budget. Happy to scope the trial task and estimate hours before starting.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- LIVE APPS -->
+  <section class="apps-section reveal">
+    <div class="section-label">Live Apps on App Store & Google Play</div>
+    <div class="apps-grid">
+      <div class="app-card">
+        <div class="app-icon">🏃</div>
+        <div class="app-name">Challe Activity</div>
+        <div class="app-store">iOS & Android</div>
+      </div>
+      <div class="app-card">
+        <div class="app-icon">🔔</div>
+        <div class="app-name">ReminderLink</div>
+        <div class="app-store">iOS & Android</div>
+      </div>
+      <div class="app-card">
+        <div class="app-icon">🏖️</div>
+        <div class="app-name">Sand Caddie</div>
+        <div class="app-store">iOS & Android</div>
+      </div>
+      <div class="app-card">
+        <div class="app-icon">📦</div>
+        <div class="app-name">Distrosub</div>
+        <div class="app-store">iOS & Android</div>
+      </div>
+      <div class="app-card">
+        <div class="app-icon">☄️</div>
+        <div class="app-name">Comet</div>
+        <div class="app-store">iOS</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DISCOVERY QUESTION -->
+  <div class="question-callout reveal">
+    <div class="qlabel">One question before we begin</div>
+    <p>Are there any specific areas of the codebase the v4 changes have touched most heavily — navigation, state management, API calls? That tells me where to focus the first read-through and makes the trial task faster and cleaner for both of us.</p>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-block reveal">
+    <h2>Ready to scope the first task today.</h2>
+    <p>Reply on Upwork and we'll get the trial task defined and started this week.</p>
+    <a href="https://www.upwork.com/freelancers/~0190fffd7807e3ad76" target="_blank" class="cta-btn">Reply on Upwork →</a>
+    <div class="cta-rate">Rate: <strong>$30/hr</strong> · Available immediately · Real-device tested</div>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  Proposal by Kashif Murtaza · React Native / Expo Developer · 8+ Years · 20+ Live Apps
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(el => io.observe(el));
+
+  // Stagger children in hero badges
+  document.querySelectorAll('.hero-badge-row .badge').forEach((b, i) => {
+    b.style.transitionDelay = `${i * 80}ms`;
+  });
+</script>
+</body>
+</html>
